@@ -36,7 +36,7 @@
     dest: "{{influxdb_conf_file}}"
     owner: "{{influxdb_user}}"
     group: "{{influxdb_group}}"
-  notify: reload influxdb
+  notify: restart influxdb
   tags:
     - conf
     - influxdb
