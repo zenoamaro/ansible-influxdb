@@ -1,0 +1,82 @@
+---
+
+# Targeting specific OSes or distributions:
+#
+#   - `ansible_system`               → Linux, BSD, ...
+#   - `ansible_os_family`            → Debian, RedHat, ...
+#   - `ansible_distribution`         → Debian, Ubuntu, RedHat, ...
+#   - `ansible_distribution_release` → precise, wheezy, ...
+#   - `ansible_pkg_mgr`              → apt, yum, ...
+
+- name: Create InfluxDB directories
+  sudo: yes
+  file:
+    dest: "{{item}}"
+    state: directory
+    owner: "{{influxdb_user}}"
+    group: "{{influxdb_group}}"
+  with_items:
+    - "{{influxdb_base_dir}}"
+    - "{{influxdb_shared_dir}}"
+    - "{{influxdb_shared_data_dir}}"
+    - "{{influxdb_raft_dir}}"
+    - "{{influxdb_storage_dir}}"
+    - "{{influxdb_wal_dir}}"
+    - "{{influxdb_conf_dir}}"
+    - "{{influxdb_logs_dir}}"
+    - "{{influxdb_run_dir}}"
+  tags:
+    - conf
+    - influxdb
+
+- name: Configure InfluxDB
+  sudo: yes
+  template:
+    src: config.toml
+    dest: "{{influxdb_conf_file}}"
+    owner: "{{influxdb_user}}"
+    group: "{{influxdb_group}}"
+  notify: reload influxdb
+  tags:
+    - conf
+    - influxdb
+
+# This only exists because it's comfortable to
+# find conf files in standard directories...
+- name: Link InfluxDB conf
+  sudo: yes
+  file:
+    src: "{{influxdb_conf_file}}"
+    dest: "{{influxdb_conf_file_alias}}"
+    state: link
+  tags:
+    - conf
+    - influxdb
+
+- name: Create InfluxDB init script
+  sudo: yes
+  template:
+    src: "{{item}}"
+    dest: "{{influxdb_init_file}}"
+    mode: 0755
+  with_first_found:
+    - files:
+        - "init.{{ansible_distribution}}-{{ansible_distribution_release}}"
+        - "init.{{ansible_distribution}}"
+        - "init.{{ansible_os_family}}"
+      paths:
+        - ../templates/
+  tags:
+    - init
+    - conf
+    - influxdb
+
+- name: Add InfluxDB to init
+  sudo: yes
+  service:
+    name: "{{influxdb_service_name}}"
+    enabled: yes
+  tags:
+    - init
+    - conf
+    - influxdb

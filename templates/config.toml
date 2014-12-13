@@ -1,0 +1,316 @@
+# WARNING: This file is auto-generated from the provisioning
+#          scripts. Do not edit by hand because your changes
+#          will likely be overwritten.
+
+# See the [documentation] for help in configuring InfluxDB.
+# [documentation]: http://influxdb.com/docs/v0.8/advanced_topics/configuration_options.html
+
+bind-address = "{{influxdb_bind_address}}"
+
+{% if influxdb_hostname %}
+# If hostname (on the OS) doesn't return a name that can be
+# resolved by the other systems in the cluster, you'll have to
+# set the hostname to an IP or something that can be resolved
+# here.
+hostname = "{{influxdb_hostname}}"{% endif %}
+
+# Once every 24 hours InfluxDB will report anonymous data to
+# m.influxdb.com. The data includes Raft name (random 8 bytes),
+# os, arch and version. We don't track ip addresses of servers
+# reporting. This is only used to track the number of instances
+# running and the versions which is very helpful for us. Change
+# this option to `true` to disable reporting.
+reporting-disabled = {{'true' if influxdb_reporting_disabled else 'false'}}
+
+
+[logging] #------------------------------------------------
+
+# Can be one of "fine", "debug", "info", "warn" or "error".
+level = "{{influxdb_logging_level}}"
+
+# `stdout` to log to standard out, or syslog facility.
+file = "{{influxdb_logging_file}}"
+
+
+[admin] #--------------------------------------------------
+
+{% if influxdb_admin_port %}
+# Binding is disabled if the port isn't set.
+port = {{influxdb_admin_port}}{% endif %}
+
+
+[api] #----------------------------------------------------
+
+{% if influxdb_api_port %}
+# Binding is disabled if the port isn't set.
+port = {{influxdb_api_port}}{% endif %}
+
+{% if influxdb_api_ssl_port and influxdb_api_ssl_cert %}
+# SSL support is enabled if you set a port and cert.
+ssl-port = {{influxdb_api_ssl_port}}
+ssl-cert = {{influxdb_api_ssl_cert}}{% endif %}
+
+# Connections will timeout after this amount of time. Ensures
+# that clients that misbehave and keep alive connections they
+# don't use won't end up connection a million times. However, if
+# a request is taking longer than this to complete, it could be
+# a problem.
+read-timeout = "{{influxdb_api_read_timeout}}"
+
+
+[input_plugins] #------------------------------------------
+
+{% if influxdb_graphite_enabled %}
+[input_plugins.graphite]
+enabled     = true
+address     = "{{influxdb_graphite_address}}"
+port        = {{influxdb_graphite_port}}
+database    = "{{influxdb_graphite_database}}"
+udp-enabled = {{'true' if influxdb_graphite_udp_enabled else 'false'}}{% endif %}
+
+{% if influxdb_graphite_enabled %}
+[input_plugins.collectd]
+enabled  = true
+address  = "{{influxdb_collectd_address}}"
+port     = {{influxdb_collectd_port}}
+database = "{{influxdb_collectd_database}}"
+# The path to the collectd types.db file.
+typesdb  = "{{influxdb_collectd_typesdb}}"{% endif %}
+
+{% if influxdb_udp_enabled %}
+[input_plugins.udp]
+enabled  = true
+port     = {{influxdb_udp_port}}
+database = "{{influxdb_udp_database}}"{% endif %}
+
+{% for server in influxdb_udp_servers %}
+{% if server.enabled %}
+# Configure multiple udp apis each can write to separate db.
+[[input_plugins.udp_servers]]
+enabled  = true
+port     = {{port}}
+database = {{database}}{% endif %}{% endfor %}
+
+
+[raft] #---------------------------------------------------
+
+# The Raft port should be open between all servers in a cluster.
+# However, this port shouldn't be accessible from the internet.
+port = {{influxdb_raft_port}}
+
+# Where the Raft logs are stored. The user running InfluxDB will
+# need read/write access.
+dir = "{{influxdb_raft_dir}}"
+
+debug = {{'true' if influxdb_raft_debug else 'false'}}
+election-timeout = "{{influxdb_raft_election_timeout}}"
+
+
+[storage] #------------------------------------------------
+
+dir = "{{influxdb_storage_dir}}"
+
+# How many requests to potentially buffer in memory. If the
+# buffer gets filled then writes will still be logged and once
+# the local storage has caught up (or compacted) the writes will
+# be replayed from the WAL.
+write-buffer-size = {{influxdb_storage_write_buffer_size}}
+
+# The engine to use for new shards, old shards will continue to
+# use the same engine.
+default-engine = "{{influxdb_storage_default_engine}}"
+
+# The default setting on this is `0`, which means unlimited. Set
+# this to something if you want to limit the max number of open
+# files. max_open_files is per shard so this * that will be max.
+max-open-shards = {{influxdb_storage_max_open_shards}}
+
+# The default setting is `100`. This option tells how many points
+# will be fetched from LevelDb before they get flushed into
+# backend.
+point-batch-size = {{influxdb_storage_point_batch_size}}
+
+# The number of points to batch in memory before writing them to
+# leveldb. Lowering this number will reduce the memory usage,
+# but will result in slower writes.
+write-batch-size = {{influxdb_storage_write_batch_size}}
+
+# The server will check this often for shards that have expired
+# that should be cleared.
+retention-sweep-period = "{{influxdb_storage_retention_sweep_period}}"
+
+[storage.engines.leveldb]
+# Maximum mmap open files, this will affect the virtual memory
+# used by the process
+max-open-files = {{influxdb_leveldb_max_open_files}}
+# LRU cache size, LRU is used by leveldb to store contents of
+# the uncompressed sstables. You can use `m` or `g` prefix for
+# megabytes and gigabytes, respectively.
+lru-cache-size = "{{influxdb_leveldb_lru_cache_size}}"
+
+[storage.engines.rocksdb]
+# Maximum mmap open files, this will affect the virtual memory
+# used by the process.
+max-open-files = {{influxdb_rocksdb_max_open_files}}
+# LRU cache size, LRU is used by rocksdb to store contents of
+# the uncompressed sstables. You can use `m` or `g` prefix for
+# megabytes and gigabytes, respectively.
+lru-cache-size = "{{influxdb_rocksdb_lru_cache_size}}"
+
+[storage.engines.hyperleveldb]
+# Maximum mmap open files, this will affect the virtual memory
+# used by the process.
+max-open-files = {{influxdb_hyperleveldb_max_open_files}}
+# LRU cache size, LRU is used by rocksdb to store contents of
+# the uncompressed sstables. You can use `m` or `g` prefix for
+# megabytes and gigabytes, respectively.
+lru-cache-size = "{{influxdb_hyperleveldb_lru_cache_size}}"
+
+[storage.engines.lmdb]
+map-size = "{{influxdb_lmdb_map_size}}"
+
+
+[cluster] #------------------------------------------------
+
+# A comma separated list of servers to seed this server. this is
+# only relevant when the server is joining a new cluster.
+# Otherwise the server will use the list of known servers prior
+# to shutting down. Any server can be pointed to as a seed. It
+# will find the Raft leader automatically.
+seed-servers = [ {% for s in influxdb_cluster_seed_servers %}"{{s}}"{% if not loop.last %}, {% endif %}{% endfor %} ]
+
+# Replication happens over a TCP connection with a [Protobuf]
+# protocol. This port should be reachable between all servers in
+# a cluster. However, this port shouldn't be accessible from the
+# internet.
+# [Protobuf]: https://developers.google.com/protocol-buffers/
+
+protobuf-port = {{influxdb_cluster_protobuf_port}}
+
+# The write timeout on the protobuf connection any duration
+# parseable by `time.ParseDuration`.
+protobuf-timeout = "{{influxdb_cluster_protobuf_timeout}}"
+
+# The heartbeat interval between the servers. must be parseable
+# by `time.ParseDuration`.
+protobuf-heartbeat = "{{influxdb_cluster_protobuf_heartbeat}}"
+
+# The minimum backoff after a failed heartbeat attempt.
+protobuf-min-backoff = "{{influxdb_cluster_protobuf_min_backoff}}"
+
+# The maxmimum backoff after a failed heartbeat attempt.
+protobuf-max-backoff = "{{influxdb_cluster_protobuf_max_backoff}}"
+
+# How many write requests to potentially buffer in memory per
+# server. If the buffer gets filled then writes will still be
+# logged and once the server has caught up (or come back online)
+# the writes will be replayed from the WAL.
+write-buffer-size = {{influxdb_cluster_write_buffer_size}}
+
+# the maximum number of responses to buffer from remote nodes,
+# if the expected number of responses exceed this number then
+# querying will happen sequentially and the buffer size will be
+# limited to this number.
+max-response-buffer-size = {{influxdb_cluster_max_response_buffer_size}}
+
+# When queries get distributed out to shards, they go in
+# parallel. This means that results can get buffered in memory
+# since results will come in any order, but have to be processed
+# in the correct time order. Setting this higher will give
+# better performance, but you'll need more memory. Setting this
+# to `1` will ensure that you don't need to buffer in memory,
+# but you won't get the best performance.
+concurrent-shard-query-limit = {{influxdb_cluster_concurrent_shard_query_limit}}
+
+
+[sharding]
+# These options specify how data is sharded across the cluster.
+# There are two shard configurations that have the same knobs:
+# short term and long term. Any series that begins with a
+# capital letter like Exceptions will be written into the long
+# term storage. Any series beginning with a lower case letter
+# like exceptions will be written into short term. The idea
+# being that you can write high precision data into short term
+# and drop it after a couple of days. Meanwhile, continuous
+# queries can run downsampling on the short term data and write
+# into the long term area.
+
+# How many servers in the cluster should have a copy of each
+# shard. this will give you high availability and scalability on
+# queries
+replication-factor = {{influxdb_sharding_replication_factor}}
+
+[sharding.short-term]
+# Each shard will have this period of time. Note that it's best
+# to have group by time() intervals on all queries be < than
+# this setting. If they are then the aggregate is calculated
+# locally. Otherwise, all that data gets sent over the network
+# when doing a query.
+duration = "{{influxdb_sharding_short_term_duration}}"
+# Split will determine how many shards to split each duration
+# into. For example, if we created a shard for 2014-02-10 and
+# split was set to 2. Then two shards would be created that have
+# the data for 2014-02-10. By default, data will be split into
+# those two shards deterministically by hashing the (database,
+# series) tuple. That means that data for a given series will be
+# written to a single shard making querying efficient. That can
+# be overridden with the next option.
+split = {{influxdb_sharding_short_term_split}}
+
+{% if influxdb_sharding_short_term_split_random %}
+# You can override the split behavior to have the data for
+# series that match a given regex be randomly distributed across
+# the shards for a given interval. You can use this if you have
+# a hot spot for a given time series writing more data than a
+# single server can handle. Most people won't have to resort to
+# this option. Also note that using this option means that
+# queries will have to send all data over the network so they
+# won't be as efficient.
+split-random = "{{influxdb_sharding_short_term_split_random}}"{% endif %}
+
+[sharding.long-term]
+# Each shard will have this period of time. Note that it's best
+# to have group by time() intervals on all queries be < than
+# this setting. If they are then the aggregate is calculated
+# locally. Otherwise, all that data gets sent over the network
+# when doing a query.
+duration = "{{influxdb_sharding_long_term_duration}}"
+# Split will determine how many shards to split each duration
+# into. For example, if we created a shard for 2014-02-10 and
+# split was set to 2. Then two shards would be created that have
+# the data for 2014-02-10. By default, data will be split into
+# those two shards deterministically by hashing the (database,
+# series) tuple. That means that data for a given series will be
+# written to a single shard making querying efficient. That can
+# be overridden with the next option.
+split = {{influxdb_sharding_long_term_split}}
+{% if influxdb_sharding_long_term_split_random %}
+# You can override the split behavior to have the data for
+# series that match a given regex be randomly distributed across
+# the shards for a given interval. You can use this if you have
+# a hot spot for a given time series writing more data than a
+# single server can handle. Most people won't have to resort to
+# this option. Also note that using this option means that
+# queries will have to send all data over the network so they
+# won't be as efficient.
+split-random = "{{influxdb_sharding_long_term_split_random}}"{% endif %}
+
+
+[wal] #----------------------------------------------------
+
+dir = "{{influxdb_wal_dir}}"
+
+# The number of writes after which wal will be flushed, `0` for
+# flushing on every write.
+flush_after = {{influxdb_wal_flush_after}}
+
+# The number of writes after which a bookmark will be created.
+bookmark_after = {{influxdb_wal_bookmark_after}}
+
+# The number of writes after which an index entry is created
+# pointing to the offset of the first request, default to `1k`.
+index_after = {{influxdb_wal_index_after}}
+
+# The number of requests per one log file. If new requests came
+# in, a new log file will be created.
+requests_per_logfile = {{influxdb_wal_requests_per_logfile}}

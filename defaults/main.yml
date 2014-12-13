@@ -1,0 +1,338 @@
+# See the [documentation] for help in configuring InfluxDB.
+# [documentation]: http://influxdb.com/docs/v0.8/advanced_topics/configuration_options.html
+
+
+# Daemon
+# ------
+
+# Determines the name of the service, and with it
+# the paths of most files and directories.
+# NOTE: Changing this is still unsupported.
+influxdb_service_name: influxdb
+
+# Determines the InfluxDB version to be installed.
+influxdb_version: latest
+
+# Data directories.
+influxdb_base_dir: "/opt/{{influxdb_service_name}}"
+influxdb_shared_dir: "{{influxdb_base_dir}}/shared"
+influxdb_shared_data_dir: "{{influxdb_shared_dir}}/data"
+# Will use `current/` for latest, else `version/<version>/`.
+influxdb_instance_dir: "{{influxdb_base_dir}}/{% if influxdb_version == 'latest' %}current{% else %}versions/{{influxdb_version}}{% endif %}/"
+
+# Configuration directories and files.
+influxdb_conf_dir: "{{influxdb_shared_dir}}"
+influxdb_conf_file: "{{influxdb_conf_dir}}/config.toml"
+influxdb_conf_file_alias: "/etc/{{influxdb_service_name}}.toml"
+influxdb_init_file: "{{influxdb_instance_dir}}/scripts/init.sh"
+influxdb_init_defaults_file: "/etc/default/{{influxdb_service_name}}"
+
+# Runtime directories and files.
+influxdb_bin_file: "/usr/bin/{{influxdb_service_name}}"
+influxdb_run_dir: "/var/run/{{influxdb_service_name}}"
+influxdb_pid_file: "{{influxdb_run_dir}}/{{influxdb_service_name}}.pid"
+
+# Run InfluxDB as this user.
+influxdb_user: "{{influxdb_service_name}}"
+influxdb_group: "{{influxdb_service_name}}"
+
+# Sets the initial password for the `root` user.
+# FIXME: This feature is actually broken right now until a clean
+#        way to pass the ENV variable to the init is found.
+influxdb_initial_root_password: root
+
+# Listen on this address, valid for every port.
+influxdb_bind_address: 0.0.0.0
+
+# If hostname (on the OS) doesn't return a name that can be
+# resolved by the other systems in the cluster, you'll have to
+# set the hostname to an IP or something that can be resolved
+# here.
+influxdb_hostname:
+
+# Once every 24 hours InfluxDB will report anonymous data to
+# m.influxdb.com. The data includes Raft name (random 8 bytes),
+# os, arch and version. We don't track ip addresses of servers
+# reporting. This is only used to track the number of instances
+# running and the versions which is very helpful for us. Change
+# this option to yes to disable reporting.
+influxdb_reporting_disabled: no
+
+
+# Logging
+# -------
+
+# Can be one of "fine", "debug", "info", "warn" or "error".
+influxdb_logging_level: info
+
+# `stdout` to log to standard out, or syslog facility.
+influxdb_logs_dir: "/var/log/{{influxdb_service_name}}"
+influxdb_logging_file: "{{influxdb_logs_dir}}/{{influxdb_service_name}}.log"
+
+
+# Admin
+# -----
+
+# Binding is disabled if the port isn't set.
+influxdb_admin_port: 8083
+
+
+# API
+# ---
+
+# Binding is disabled if the port isn't set.
+influxdb_api_port: 8086
+
+# SSL support is enabled if you set a port and cert.
+influxdb_api_ssl_port: 8084
+influxdb_api_ssl_cert: # /path/to/cert.pem
+
+# Connections will timeout after this amount of time. Ensures
+# that clients that misbehave and keep alive connections they
+# don't use won't end up connection a million times. However, if
+# a request is taking longer than this to complete, it could be
+# a problem.
+influxdb_api_read_timeout: 5s
+
+
+# Input plugins
+# -------------
+
+influxdb_graphite_enabled: no
+# If not set, is actually set to the bind address.
+influxdb_graphite_address: "{{influxdb_bind_address}}"
+influxdb_graphite_port: 2003
+# Store graphite data in this database.
+influxdb_graphite_database:
+# Enable udp interface on the same port as the tcp interface.
+influxdb_graphite_udp_enabled: yes
+
+influxdb_collectd_enabled: no
+# If not set, is actually set to the bind address.
+influxdb_collectd_address: "{{influxdb_bind_address}}"
+influxdb_collectd_port: 25826
+influxdb_collectd_database:
+# The path to the collectd types.db file.
+# Types.db can be found in a collectd installation or on github:
+# https://github.com/collectd/collectd/blob/master/src/types.db
+influxdb_collectd_typesdb: /usr/share/collectd/types.db
+
+influxdb_udp_enabled: no
+influxdb_udp_port: 4444
+influxdb_udp_database:
+
+# Configure multiple udp apis each can write to separate db.
+influxdb_udp_servers: []
+# - enabled: no
+#   port: 5551
+#   database:
+
+
+# Raft
+# ----
+
+# The Raft port should be open between all servers in a cluster.
+# However, this port shouldn't be accessible from the internet.
+influxdb_raft_port: 8090
+
+# Where the Raft logs are stored. The user running InfluxDB will
+# need read/write access.
+influxdb_raft_dir: "{{influxdb_shared_data_dir}}/raft"
+
+influxdb_raft_debug: no
+influxdb_raft_election_timeout: 1s
+
+
+# Storage
+# -------
+
+influxdb_storage_dir: "{{influxdb_shared_data_dir}}/db"
+
+# How many requests to potentially buffer in memory. If the
+# buffer gets filled then writes will still be logged and once
+# the local storage has caught up (or compacted) the writes will
+# be replayed from the WAL.
+influxdb_storage_write_buffer_size: 10000
+
+# The engine to use for new shards, old shards will continue to
+# use the same engine.
+influxdb_storage_default_engine: rocksdb
+
+# The default setting on this is 0, which means unlimited. Set
+# this to something if you want to limit the max number of open
+# files. max_open_files is per shard so this * that will be max.
+influxdb_storage_max_open_shards: 0
+
+# The default setting is 100. This option tells how many points
+# will be fetched from LevelDb before they get flushed into
+# backend.
+influxdb_storage_point_batch_size: 100
+
+# The number of points to batch in memory before writing them to
+# leveldb. Lowering this number will reduce the memory usage,
+# but will result in slower writes.
+influxdb_storage_write_batch_size: 5000000
+
+# The server will check this often for shards that have expired
+# that should be cleared.
+influxdb_storage_retention_sweep_period: 10m
+
+
+# Storage engines
+# ---------------
+
+# Maximum mmap open files, this will affect the virtual memory
+# used by the process
+influxdb_leveldb_max_open_files: 1000
+
+# LRU cache size, LRU is used by leveldb to store contents of
+# the uncompressed sstables. You can use `m` or `g` prefix for
+# megabytes and gigabytes, respectively.
+influxdb_leveldb_lru_cache_size: 200m
+
+# Maximum mmap open files, this will affect the virtual memory
+# used by the process.
+influxdb_rocksdb_max_open_files: 1000
+
+# LRU cache size, LRU is used by rocksdb to store contents of
+# the uncompressed sstables. You can use `m` or `g` prefix for
+# megabytes and gigabytes, respectively.
+influxdb_rocksdb_lru_cache_size: 200m
+
+# Maximum mmap open files, this will affect the virtual memory
+# used by the process.
+influxdb_hyperleveldb_max_open_files: 1000
+
+# LRU cache size, LRU is used by rocksdb to store contents of
+# the uncompressed sstables. You can use `m` or `g` prefix for
+# megabytes and gigabytes, respectively.
+influxdb_hyperleveldb_lru_cache_size: 200m
+
+influxdb_lmdb_map_size: 100g
+
+
+# Cluster
+# -------
+
+# A list of servers to seed this server. this is only relevant
+# when the server is joining a new cluster. Otherwise the server
+# will use the list of known servers prior to shutting down. Any
+# server can be pointed to as a seed. It will find the Raft
+# leader automatically.
+influxdb_cluster_seed_servers: []
+# - hosta:8090
+# - hostb:8090
+
+# Replication happens over a TCP connection with a [Protobuf]
+# protocol. This port should be reachable between all servers in
+# a cluster. However, this port shouldn't be accessible from the
+# internet.
+# [Protobuf]: https://developers.google.com/protocol-buffers/
+
+influxdb_cluster_protobuf_port: 8099
+
+# The write timeout on the protobuf connection any duration
+# parseable by `time.ParseDuration`.
+influxdb_cluster_protobuf_timeout: 2s
+
+# The heartbeat interval between the servers. must be parseable
+# by `time.ParseDuration`.
+influxdb_cluster_protobuf_heartbeat: 200ms
+
+# The minimum backoff after a failed heartbeat attempt.
+influxdb_cluster_protobuf_min_backoff: 1s
+
+# The maxmimum backoff after a failed heartbeat attempt.
+influxdb_cluster_protobuf_max_backoff: 10s
+
+# How many write requests to potentially buffer in memory per
+# server. If the buffer gets filled then writes will still be
+# logged and once the server has caught up (or come back online)
+# the writes will be replayed from the WAL.
+influxdb_cluster_write_buffer_size: 1000
+
+# the maximum number of responses to buffer from remote nodes,
+# if the expected number of responses exceed this number then
+# querying will happen sequentially and the buffer size will be
+# limited to this number.
+influxdb_cluster_max_response_buffer_size: 100
+
+# When queries get distributed out to shards, they go in
+# parallel. This means that results can get buffered in memory
+# since results will come in any order, but have to be processed
+# in the correct time order. Setting this higher will give
+# better performance, but you'll need more memory. Setting this
+# to `1` will ensure that you don't need to buffer in memory,
+# but you won't get the best performance.
+influxdb_cluster_concurrent_shard_query_limit: 10
+
+
+# Sharding
+# --------
+#
+# These options specify how data is sharded across the cluster.
+# There are two shard configurations that have the same knobs:
+# short term and long term. Any series that begins with a
+# capital letter like Exceptions will be written into the long
+# term storage. Any series beginning with a lower case letter
+# like exceptions will be written into short term. The idea
+# being that you can write high precision data into short term
+# and drop it after a couple of days. Meanwhile, continuous
+# queries can run downsampling on the short term data and write
+# into the long term area.
+
+# How many servers in the cluster should have a copy of each
+# shard. This will give you high availability and scalability on
+# queries.
+influxdb_sharding_replication_factor: 1
+
+# Each shard will have this period of time. Note that it's best
+# to have group by time() intervals on all queries be < than
+# this setting. If they are then the aggregate is calculated
+# locally. Otherwise, all that data gets sent over the network
+# when doing a query.
+influxdb_sharding_short_term_duration: 7d
+influxdb_sharding_long_term_duration: 30d
+
+# Split will determine how many shards to split each duration
+# into. For example, if we created a shard for 2014-02-10 and
+# split was set to 2. Then two shards would be created that have
+# the data for 2014-02-10. By default, data will be split into
+# those two shards deterministically by hashing the (database,
+# series) tuple. That means that data for a given series will be
+# written to a single shard making querying efficient. That can
+# be overridden with the next option.
+influxdb_sharding_short_term_split: 1
+influxdb_sharding_long_term_split: 1
+
+# You can override the split behavior to have the data for
+# series that match a given regex be randomly distributed across
+# the shards for a given interval. You can use this if you have
+# a hot spot for a given time series writing more data than a
+# single server can handle. Most people won't have to resort to
+# this option. Also note that using this option means that
+# queries will have to send all data over the network so they
+# won't be as efficient.
+influxdb_sharding_short_term_split_random: # "/^hf.*/"
+influxdb_sharding_long_term_split_random: #"/^Hf.*/"
+
+
+# Write-ahead log
+# ---------------
+
+influxdb_wal_dir: "{{influxdb_shared_data_dir}}/wal"
+
+# The number of writes after which wal will be flushed, `0` for
+# flushing on every write.
+influxdb_wal_flush_after: 1000
+
+# The number of writes after which a bookmark will be created.
+influxdb_wal_bookmark_after: 1000
+
+# The number of writes after which an index entry is created
+# pointing to the offset of the first request, default to `1k`.
+influxdb_wal_index_after: 1000
+
+# The number of requests per one log file. If new requests came
+# in, a new log file will be created.
+influxdb_wal_requests_per_logfile: 10000

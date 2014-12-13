@@ -1,0 +1,9 @@
+---
+
+- name: reload influxdb
+  sudo: yes
+  service: name=influxdb state=reloaded
+
+- name: restart influxdb
+  sudo: yes
+  service: name=influxdb state=restarted

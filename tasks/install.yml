@@ -1,0 +1,50 @@
+---
+
+# Targeting specific OSes or distributions:
+#
+#   - `ansible_system`               → Linux, BSD, ...
+#   - `ansible_os_family`            → Debian, RedHat, ...
+#   - `ansible_distribution`         → Debian, Ubuntu, RedHat, ...
+#   - `ansible_distribution_release` → precise, wheezy, ...
+#   - `ansible_pkg_mgr`              → apt, yum, ...
+#   - `ansible_architecture`         → x86_64, x86_32, ...
+
+
+# Debian
+# ------
+
+# FIXME: `/root/` is hardcoded here, but shouldn't be.
+#        Unfortunately though, Dpkg does not like `~`.
+
+- name: "Download InfluxDB {{influxdb_version}} for Debian"
+  sudo: yes
+  when: ansible_os_family == 'Debian'
+  get_url:
+    url: "https://s3.amazonaws.com/influxdb/influxdb_{{influxdb_version}}_amd64.deb"
+    dest: /root/influxdb.deb
+  tags:
+    - deps
+    - influxdb
+- name: Install InfluxDB
+  sudo: yes
+  when: ansible_os_family == 'Debian'
+  apt:
+    deb: /root/influxdb.deb
+    state: installed
+  tags:
+    - deps
+    - influxdb
+
+
+# RedHat
+# ------
+
+- name: "Install InfluxDB {{influxdb_version}} for RedHat"
+  sudo: yes
+  when: ansible_os_family == 'RedHat'
+  yum:
+    name: "https://s3.amazonaws.com/influxdb/influxdb-{{influxdb_version}}-1-x86_64.rpm"
+    state: installed
+  tags:
+    - deps
+    - influxdb

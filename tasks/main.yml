@@ -1,0 +1,16 @@
+---
+
+# Delegate further configuration to subtasks
+# placed in this same directory.
+
+- include: install.yml
+- include: configure.yml
+
+- name: Ensure InfluxDB is running
+  sudo: yes
+  service:
+    name: "{{influxdb_service_name}}"
+    state: running
+  tags:
+    - init
+    - influxdb
