@@ -23,6 +23,7 @@
     - "{{influxdb_storage_dir}}"
     - "{{influxdb_wal_dir}}"
     - "{{influxdb_conf_dir}}"
+    - "{{influxdb_instance_dir}}"
     - "{{influxdb_scripts_dir}}"
     - "{{influxdb_logs_dir}}"
     - "{{influxdb_run_dir}}"
