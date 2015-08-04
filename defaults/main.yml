@@ -18,7 +18,7 @@ influxdb_base_dir: "/opt/{{influxdb_service_name}}"
 influxdb_shared_dir: "{{influxdb_base_dir}}/shared"
 influxdb_shared_data_dir: "{{influxdb_shared_dir}}/data"
 # Will use `current/` for latest, else `version/<version>/`.
-influxdb_instance_dir: "{{influxdb_base_dir}}/{% if influxdb_version == 'latest' %}current{% else %}versions/{{influxdb_version}}{% endif %}/"
+influxdb_instance_dir: "{{influxdb_base_dir}}/{% if influxdb_version == 'latest' %}current{% else %}versions/{{influxdb_version}}{% endif %}"
 
 # Configuration directories and files.
 influxdb_conf_dir: "{{influxdb_shared_dir}}"

@@ -69,6 +69,7 @@ Changelog
 ---------
 ### next
 - Script directory is now being created during configuration. Fixes #1.
+- Fixed double slashes when producing instance paths. Fixes #1.
 
 ### 0.1.1
 - The package list is not being updated in playbooks anymore.
