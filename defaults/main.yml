@@ -337,3 +337,10 @@ influxdb_wal_index_after: 1000
 # The number of requests per one log file. If new requests came
 # in, a new log file will be created.
 influxdb_wal_requests_per_logfile: 10000
+
+
+# Databases
+# ---------
+
+# databases to create
+infludb_databases: []
