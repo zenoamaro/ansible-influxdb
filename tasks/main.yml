@@ -18,3 +18,5 @@
   tags:
     - init
     - influxdb
+
+- include: database.yml
