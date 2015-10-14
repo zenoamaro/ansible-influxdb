@@ -98,6 +98,13 @@ daemon={{influxdb_bin_file}}
 # pid file for the daemon
 pidfile={{influxdb_pid_file}}
 
+# Create PIDDIR on runtime
+if [ ! -d {{influxdb_run_dir}} ];
+then
+  mkdir {{influxdb_run_dir}}
+  chown {{influxdb_user}} {{influxdb_run_dir}}
+fi
+
 # Configuration file
 config={{influxdb_conf_file}}
 
