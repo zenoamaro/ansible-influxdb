@@ -7,3 +7,7 @@
 - name: restart influxdb
   sudo: yes
   service: name=influxdb state=restarted
+
+- name: systemctl daemon-reload
+  sudo: yes
+  shell: systemctl daemon-reload

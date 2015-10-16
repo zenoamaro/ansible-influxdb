@@ -43,7 +43,7 @@
   sudo: yes
   when: ansible_os_family == 'RedHat'
   yum:
-    name: "https://s3.amazonaws.com/influxdb/influxdb-{{influxdb_version}}-1-x86_64.rpm"
+    name: "https://s3.amazonaws.com/influxdb/influxdb-{{influxdb_version}}-1.x86_64.rpm"
     state: installed
   tags:
     - deps
