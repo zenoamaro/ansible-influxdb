@@ -61,4 +61,21 @@ Vagrant.configure '2' do |config|
 		end
 	end
 
+	config.vm.define 'test-centos7', autostart:false do |box|
+		box.vm.box = "bento/centos-7.1"
+		config.vm.network :private_network, ip: "192.168.33.22"
+		config.vm.provision :ansible do |ansible|
+			apply_test_ansible_defaults ansible
+			ansible.extra_vars = {}
+		end
+	end
+
+	config.vm.define 'test-centos6', autostart:false do |box|
+		box.vm.box = "bento/centos-6.7"
+		config.vm.network :private_network, ip: "192.168.33.23"
+		config.vm.provision :ansible do |ansible|
+			apply_test_ansible_defaults ansible
+			ansible.extra_vars = {}
+		end
+	end
 end
