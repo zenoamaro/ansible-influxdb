@@ -11,7 +11,7 @@
 influxdb_service_name: influxdb
 
 # Determines the InfluxDB version to be installed.
-influxdb_version: latest
+influxdb_version: 0.9.4.2
 
 # Data directories.
 influxdb_base_dir: "/opt/{{influxdb_service_name}}"

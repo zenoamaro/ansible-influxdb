@@ -43,8 +43,17 @@
   sudo: yes
   when: ansible_os_family == 'RedHat'
   yum:
-    name: "https://s3.amazonaws.com/influxdb/influxdb-{{influxdb_version}}-1-x86_64.rpm"
+    name: "https://s3.amazonaws.com/influxdb/influxdb-{{influxdb_version}}-1.x86_64.rpm"
     state: installed
   tags:
     - deps
     - influxdb
+
+- name: "Install depedencies for centos 6"
+  sudo: yes
+  yum:
+    name: "{{ item }}"
+    state: installed
+  with_items:
+    - libselinux-python
+  when: ansible_os_family == "RedHat" and ansible_distribution_major_version|int == 6

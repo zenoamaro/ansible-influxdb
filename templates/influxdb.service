@@ -1,0 +1,13 @@
+[Unit]
+Description=InfluxDB Server
+After=network.target
+
+[Install]
+WantedBy=network.target
+
+[Service]
+User={{influxdb_user}}
+Group={{influxdb_group}}
+PermissionsStartOnly=true
+ExecStart={{influxdb_bin_file}} -config {{influxdb_conf_file}}
+Restart=on-failure
