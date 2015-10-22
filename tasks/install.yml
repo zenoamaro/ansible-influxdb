@@ -48,3 +48,12 @@
   tags:
     - deps
     - influxdb
+
+- name: "Install depedencies for centos 6"
+  sudo: yes
+  yum:
+    name: "{{ item }}"
+    state: installed
+  with_items:
+    - libselinux-python
+  when: ansible_os_family == "RedHat" and ansible_distribution_major_version|int == 6
