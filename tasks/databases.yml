@@ -1,0 +1,14 @@
+---
+
+- name: Install PIP
+  apt: pkg=python-pip
+
+- pip: name=httplib2
+
+- name: Create database
+  uri:
+    url=http://localhost:{{influxdb_api_port}}/db?u=root&p={{ influxdb_initial_root_password }}
+    method=POST
+    body='{"name":"{{ item }}"}'
+    status_code=201,409
+  with_items: infludb_databases
