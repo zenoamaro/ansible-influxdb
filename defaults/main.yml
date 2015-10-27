@@ -343,4 +343,4 @@ influxdb_wal_requests_per_logfile: 10000
 # ---------
 
 # databases to create
-infludb_databases: []
+influxdb_databases: []
